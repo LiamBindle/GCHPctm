@@ -1,14 +1,17 @@
-.. GEOS-Chem High Performance documentation master file, created by
-   sphinx-quickstart on Sun Oct 11 17:07:56 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to GEOS-Chem High Performance's documentation!
-======================================================
+GCHP User Guide
+===============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
+
+   getting_started
+   cloning
+   compiling
+   run_directory
+   configure_rundir
+   running
 
 
 

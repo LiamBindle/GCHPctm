@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'GEOS-Chem High Performance'
+project = 'GCHP'
 copyright = '2020, GEOS-Chem Support Team'
 author = 'GEOS-Chem Support Team'
 
