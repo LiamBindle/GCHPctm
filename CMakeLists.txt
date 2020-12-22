@@ -4,6 +4,17 @@ project (gchp_ctm
   LANGUAGES Fortran CXX C
 )
 
+# Disable OMP by default if using gfortran to avoid a performance hit.
+# Enable OMP if using ifort to avoid a run-time seg fault. Both of these issues
+# are bugs under investigation.
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  set(OMP OFF CACHE BOOL "Switch to enable/disable OpenMP")
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+  set(OMP ON CACHE BOOL "Switch to enable/disable OpenMP")
+else()
+    message(FATAL_ERROR "Unknown Fortran compiler: ${CMAKE_Fortran_COMPILER_ID}")
+endif()
+
 # Add ESMA_cmake and ecbuild's module directories to the module path
 list(APPEND CMAKE_MODULE_PATH 
   ${CMAKE_CURRENT_SOURCE_DIR}/ESMA_cmake 
@@ -11,11 +22,9 @@ list(APPEND CMAKE_MODULE_PATH
 )
 
 # Run directory
-set(RUNDIR ${CMAKE_BINARY_DIR}/.. CACHE PATH "Path to GCHPctm run directory")
-if(RUNDIR)
-  set(CMAKE_INSTALL_PREFIX ${RUNDIR} CACHE PATH "Install prefix for GCHPctm" FORCE)
-  set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE)
-endif()
+set(RUNDIR "" CACHE PATH "Path(s) to run directory (semicolon separated list). Specifies install locations for gchp")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Fake CMAKE_INSTALL_PREFIX (use RUNDIR instead)" FORCE)
+set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE)
 
 # Find nc-config and nf-config
 find_program(NC_CONFIG NAMES "nc-config" DOC "Location of nc-config utility")
@@ -42,17 +51,37 @@ inspect_netcdf_config(CMAKE_PREFIX_PATH "${NF_CONFIG}" "--prefix")
 set(BASEDIR IGNORE CACHE INTERNAL "Path to base libs")
 set(ENABLE_TESTS OFF)
 set(PFUNIT OFF)
-# Override REQUIRED-ness of certain packages
-set(GFTL_IS_REQUIRED_ARG "" CACHE INTERNAL "GFTL is not required for gchp_ctm")
-set(MKL_IS_REQUIRED_ARG  "" CACHE INTERNAL "MKL is not required for gchp_ctm")
-set(FLAP_IS_REQUIRED_ARG "" CACHE INTERNAL "FLAP is not required for gchp_ctm")
+
+# Override REQUIRED-ness of certain packages searched for in FindBaselibs.cmake
+set(GFTL_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring GFTL as an external library")
+set(GFTL_SHARED_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring GFTL_SHARED as an external library")
+set(YAFYAML_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring YAFYAML as an external library")
+set(PFLOGGER_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring PFLOGGER as an external library")
+set(MKL_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring MKL as an external library")
+set(FLAP_IS_REQUIRED_ARG
+	"" CACHE INTERNAL
+	"Prevent Baselibs from requiring FLAG as an external library")
+
 # Disable find packages that aren't required for gchp_ctm
 set(CMAKE_DISABLE_FIND_PACKAGE_MKL          TRUE)
 set(CMAKE_DISABLE_FIND_PACKAGE_FLAP         TRUE)
 set(CMAKE_DISABLE_FIND_PACKAGE_GFTL         TRUE)
 set(CMAKE_DISABLE_FIND_PACKAGE_GFTL_SHARED  TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_YAFYAML      TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_PFLOGGER     TRUE)
 set(CMAKE_DISABLE_FIND_PACKAGE_FARGPARSE    TRUE)
 set(CMAKE_DISABLE_FIND_PACKAGE_LATEX        TRUE)
+
 # Add gchp_ctm's expected environment variables to CMAKE_PREFIX_PATH
 list(APPEND CMAKE_PREFIX_PATH 
   $ENV{ESMF_ROOT} $ENV{ESMF_ROOT}/DEFAULTINSTALLDIR
@@ -75,7 +104,7 @@ add_subdirectory(src)
 
 # Exclude the following libraries from the "all" target 
 set_target_properties(
-  force-generation-of-includes    MAPL_cfio_r8    GMAO_pilgrim
+  MAPL_cfio_r8                    GMAO_pilgrim
   NSIDC-OSTIA_SST-ICE_blend       LANL_cice       GEOS_PertShared
   GEOS_PertSvecs                  Tapenade        GMAO_psas
   GMAO_transf                     GMAO_stoch      arpack

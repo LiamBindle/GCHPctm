@@ -608,9 +608,15 @@
       _VERIFY(STATUS)
       call MAPL_GetPointer ( IMPORT,     PS1,    'PS2', RC=STATUS )
       _VERIFY(STATUS)
+<<<<<<< HEAD
       call MAPL_GetPointer ( IMPORT,      UA,     'UA', RC=STATUS )
       _VERIFY(STATUS)
       call MAPL_GetPointer ( IMPORT,      VA,     'VA', RC=STATUS )
+=======
+      call MAPL_GetPointer ( IMPORT,      UA,    'UA',  RC=STATUS )
+      _VERIFY(STATUS)
+      call MAPL_GetPointer ( IMPORT,      VA,    'VA',  RC=STATUS )
+>>>>>>> upstream/main
       _VERIFY(STATUS)
       call MAPL_GetPointer ( IMPORT,   SPHU0,  'SPHU1', RC=STATUS )
       _VERIFY(STATUS)
