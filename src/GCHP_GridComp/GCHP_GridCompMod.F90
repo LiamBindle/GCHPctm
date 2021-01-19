@@ -33,6 +33,7 @@ module GCHP_GridCompMod
   use CHEM_GridCompMod,    only : AtmosChemSetServices => SetServices
   use AdvCore_GridCompMod, only : AtmosAdvSetServices  => SetServices
   use GCHPctmEnv_GridComp, only : EctmSetServices      => SetServices
+  use ExtDataExporter_GridComp, only : EDESetServices      => SetServices
 
   implicit none
   private
@@ -54,7 +55,7 @@ module GCHP_GridCompMod
  
 !EOP
 
-  integer ::  ADV, CHEM, ECTM, MemDebugLevel
+  integer ::  ADV, CHEM, ECTM, EDE, MemDebugLevel
 
 contains
 
@@ -126,6 +127,11 @@ contains
 
    ! Add component for deriving variables for other components
    ECTM = MAPL_AddChild(GC, NAME='GCHPctmEnv' , SS=EctmSetServices,      &
+                            RC=STATUS)
+   _VERIFY(STATUS)
+
+      ! Add component for deriving variables for other components
+   EDE = MAPL_AddChild(GC, NAME='ExtDataExporter' , SS=EDESetServices,      &
                             RC=STATUS)
    _VERIFY(STATUS)
 
@@ -411,6 +417,16 @@ contains
                   'GCHP, before GCHPctmEnv: ', RC=STATUS )
        _VERIFY(STATUS)
     endif
+
+    call MAPL_TimerOn ( STATE, GCNames(ECE) )
+    call ESMF_GridCompRun ( GCS(ECE),               &
+                            importState = GIM(ECE), &
+                            exportState = GEX(ECE), &
+                            clock       = CLOCK,     &
+                            userRC      = STATUS  )
+    _VERIFY(STATUS)
+
+    call MAPL_TimerOff( STATE, GCNames(ECE) )
 
     call MAPL_TimerOn ( STATE, GCNames(ECTM) )
     call ESMF_GridCompRun ( GCS(ECTM),               &
