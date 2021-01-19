@@ -418,15 +418,15 @@ contains
        _VERIFY(STATUS)
     endif
 
-    call MAPL_TimerOn ( STATE, GCNames(ECE) )
-    call ESMF_GridCompRun ( GCS(ECE),               &
-                            importState = GIM(ECE), &
-                            exportState = GEX(ECE), &
+    call MAPL_TimerOn ( STATE, GCNames(EDE) )
+    call ESMF_GridCompRun ( GCS(EDE),               &
+                            importState = GIM(EDE), &
+                            exportState = GEX(EDE), &
                             clock       = CLOCK,     &
                             userRC      = STATUS  )
     _VERIFY(STATUS)
 
-    call MAPL_TimerOff( STATE, GCNames(ECE) )
+    call MAPL_TimerOff( STATE, GCNames(EDE) )
 
     call MAPL_TimerOn ( STATE, GCNames(ECTM) )
     call ESMF_GridCompRun ( GCS(ECTM),               &
