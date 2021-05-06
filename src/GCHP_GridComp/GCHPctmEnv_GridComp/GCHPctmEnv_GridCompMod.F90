@@ -13,7 +13,7 @@
 ! !USES:
       use ESMF
       use MAPL_Mod
-      use FV_StateMod, only : fv_computeMassFluxes
+      use FV_StateMod, only : fv_computeMassFluxes, fv_getVerticalMassFlux
       use GEOS_FV3_UtilitiesMod, only : A2D2C
       use m_set_eta,  only : set_eta
 
@@ -256,6 +256,15 @@
            DIMS       = MAPL_DimsHorzVert,                           &
            VLOCATION  = MAPL_VLocationCenter,             RC=STATUS  )
       _VERIFY(STATUS)
+
+      call MAPL_AddExportSpec ( gc,                                  &
+           SHORT_NAME = 'MFZr8',                                     &
+           LONG_NAME  = 'pressure_weighted_accumulated_upward_mass_flux', &
+           UNITS      = 'Pa m+2 s-1',                                &
+           PRECISION  = ESMF_KIND_R8,                                &
+           DIMS       = MAPL_DimsHorzVert,                           &
+           VLOCATION  = MAPL_VLocationCenter,             RC=STATUS  )
+           _VERIFY(STATUS)
 
 !---------------------------------------------------------------------
       call MAPL_AddExportSpec ( gc,                                  &
@@ -554,6 +563,7 @@
       real(r8), pointer, dimension(:,:,:) :: DryPLE0r8 => null()
       real(r8), pointer, dimension(:,:,:) ::     MFXr8 => null()
       real(r8), pointer, dimension(:,:,:) ::     MFYr8 => null()
+      real(r8), pointer, dimension(:,:,:) ::     MFZr8 => null()
       real(r8), pointer, dimension(:,:,:) ::   SPHU0r8 => null()
 
 !-MSL
@@ -720,6 +730,8 @@
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT, MFYr8, 'MFYr8', RC=STATUS )
       _VERIFY(STATUS)
+      call MAPL_GetPointer ( EXPORT, MFZr8, 'MFZr8', RC=STATUS )
+      _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT,  CXr8,  'CXr8', RC=STATUS )
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT,  CYr8,  'CYr8', RC=STATUS )
@@ -743,6 +755,7 @@
       end if
       call fv_computeMassFluxes(UCr8, VCr8, PLEr8, &
                                    MFXr8, MFYr8, CXr8, CYr8, dt)
+      call fv_getVerticalMassFlux(MFXr8, MFYr8, MFZr8, dt)
 
       !DEALLOCATE( UCr8, VCr8, PLEr8, PLE0, PLE1, DryPLE0, DryPLE1 )
       DEALLOCATE( UCr8, VCr8, PLEr8, UC, VC)
