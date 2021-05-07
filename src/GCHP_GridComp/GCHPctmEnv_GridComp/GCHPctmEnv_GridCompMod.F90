@@ -732,6 +732,12 @@
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT, VerticalMassFlux, 'VerticalMassFlux', RC=STATUS )
       _VERIFY(STATUS)
+
+      if (.not. ASSOCIATED(VerticalMassFlux)) then
+         write(*,*) 'Pointer is not associated!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+         flush(6)
+      endif
+
       call MAPL_GetPointer ( EXPORT,  CXr8,  'CXr8', RC=STATUS )
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT,  CYr8,  'CYr8', RC=STATUS )
