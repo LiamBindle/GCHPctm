@@ -257,15 +257,6 @@
            VLOCATION  = MAPL_VLocationCenter,             RC=STATUS  )
       _VERIFY(STATUS)
 
-      call MAPL_AddExportSpec ( gc,                                  &
-           SHORT_NAME = 'VerticalMassFlux',                                     &
-           LONG_NAME  = 'pressure_weighted_accumulated_upward_mass_flux', &
-           UNITS      = 'Pa m+2 s-1',                                &
-           PRECISION  = ESMF_KIND_R8,                                &
-           DIMS       = MAPL_DimsHorzVert,                           &
-           VLOCATION  = MAPL_VLocationEdge,             RC=STATUS  )
-           _VERIFY(STATUS)
-
 !---------------------------------------------------------------------
       call MAPL_AddExportSpec ( gc,                                  &
            SHORT_NAME = 'CX',                                      &
@@ -339,6 +330,15 @@
            SHORT_NAME = 'PLE0r8',                                    &
            LONG_NAME  = 'pressure_at_layer_edges_before_advection',  &
            UNITS      = 'Pa',                                        &
+           PRECISION  = ESMF_KIND_R8,                                &
+           DIMS       = MAPL_DimsHorzVert,                           &
+           VLOCATION  = MAPL_VLocationEdge,             RC=STATUS  )
+      _VERIFY(STATUS)
+
+      call MAPL_AddExportSpec ( gc,                                  &
+           SHORT_NAME = 'UpwardsMassFlux',                           &
+           LONG_NAME  = 'upward_mass_flux_of_air',                   &
+           UNITS      = 'kg m-2 s-1',                                &
            PRECISION  = ESMF_KIND_R8,                                &
            DIMS       = MAPL_DimsHorzVert,                           &
            VLOCATION  = MAPL_VLocationEdge,             RC=STATUS  )
@@ -562,8 +562,7 @@
       real(r8), pointer, dimension(:,:,:) :: DryPLE1r8 => null()
       real(r8), pointer, dimension(:,:,:) :: DryPLE0r8 => null()
       real(r8), pointer, dimension(:,:,:) ::     MFXr8 => null()
-      real(r8), pointer, dimension(:,:,:) ::     MFYr8 => null()
-      real(r8), pointer, dimension(:,:,:) ::     VerticalMassFlux => null()
+      real(r8), pointer, dimension(:,:,:) ::     MFYr8 => null()      
       real(r8), pointer, dimension(:,:,:) ::   SPHU0r8 => null()
 
 !-MSL
@@ -582,6 +581,9 @@
       real,     pointer, dimension(:,:,:) ::      PLE1 => null()
       real,     pointer, dimension(:,:,:) ::   DryPLE0 => null()
       real,     pointer, dimension(:,:,:) ::   DryPLE1 => null()
+
+      ! Vertical motion diagnostics
+      real(r8), pointer, dimension(:,:,:) :: UpwardsMassFlux => null()
 
       integer               :: km, k, is, ie, js, je, lm, l, ik
       integer               :: ndt, isd, ied, jsd, jed
@@ -730,15 +732,6 @@
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT, MFYr8, 'MFYr8', RC=STATUS )
       _VERIFY(STATUS)
-      call MAPL_GetPointer ( EXPORT, VerticalMassFlux, 'VerticalMassFlux', RC=STATUS )
-      _VERIFY(STATUS)
-
-      if (.not. ASSOCIATED(VerticalMassFlux)) then
-         write(*,*) 'Pointer is not associated!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-         flush(6)
-      endif
-      VerticalMassFlux = 0.0d0
-
       call MAPL_GetPointer ( EXPORT,  CXr8,  'CXr8', RC=STATUS )
       _VERIFY(STATUS)
       call MAPL_GetPointer ( EXPORT,  CYr8,  'CYr8', RC=STATUS )
@@ -762,10 +755,26 @@
       end if
       call fv_computeMassFluxes(UCr8, VCr8, PLEr8, &
                                    MFXr8, MFYr8, CXr8, CYr8, dt)
-      call fv_getVerticalMassFlux(MFXr8, MFYr8, VerticalMassFlux, dt)
 
       !DEALLOCATE( UCr8, VCr8, PLEr8, PLE0, PLE1, DryPLE0, DryPLE1 )
       DEALLOCATE( UCr8, VCr8, PLEr8, UC, VC)
+
+      ! Vertical motion diagnostics
+      call MAPL_GetPointer ( EXPORT, UpwardsMassFlux, 'UpwardsMassFlux', ALLOC=.TRUE., RC=STATUS )
+      _VERIFY(STATUS)
+
+      ! Get vertical mass flux
+      call fv_getVerticalMassFlux(MFXr8, MFYr8, UpwardsMassFlux, dt)
+
+      ! Flip vertical so that GCHP diagnostic is positive="up"
+      UpwardsMassFlux(:,:,:) = UpwardsMassFlux(:,:,LM:0:-1)
+
+      ! LRB Note: 
+      ! The upward_air_velocity could be calculated by
+      !   upward_air_velocity = upward_mass_flux_of_air / air_density(edge)
+      ! but calculating air_density(edge) is lossy because it requires 
+      ! temperature be interpolated to the level edge. Therefore, I've 
+      ! excluded it.
 
       call MAPL_TimerOff(ggState,"RUN")
       call MAPL_TimerOff(ggState,"TOTAL")
