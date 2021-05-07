@@ -737,6 +737,7 @@
          write(*,*) 'Pointer is not associated!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
          flush(6)
       endif
+      VerticalMassFlux = 0.0d0
 
       call MAPL_GetPointer ( EXPORT,  CXr8,  'CXr8', RC=STATUS )
       _VERIFY(STATUS)
